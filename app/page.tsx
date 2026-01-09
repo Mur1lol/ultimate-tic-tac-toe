@@ -125,7 +125,7 @@ export default function Home() {
               <p className="text-lg sm:text-xl font-semibold text-gray-700 mb-2">
                 Vez do jogador:{' '}
                 <span
-                  className={`text-2xl sm:text-3xl font-bold ${
+                  className={`text-xl sm:text-2xl md:text-3xl font-bold ${
                     gameState.currentPlayer === 'X' ? 'text-blue-600' : 'text-red-600'
                   }`}
                 >

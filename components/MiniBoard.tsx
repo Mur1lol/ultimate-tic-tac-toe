@@ -58,7 +58,7 @@ export default function MiniBoard({
         <div className="absolute inset-0 bg-opacity-90 flex items-center justify-center z-10 rounded-lg backdrop-blur-sm"
           style={{ backgroundColor: winner === 'X' ? 'rgba(37, 99, 235, 0.9)' : 'rgba(220, 38, 38, 0.9)' }}
         >
-          <span className="text-6xl sm:text-8xl font-bold text-white drop-shadow-lg">
+          <span className="text-4xl sm:text-6xl md:text-8xl font-bold text-white drop-shadow-lg">
             {winner}
           </span>
         </div>
