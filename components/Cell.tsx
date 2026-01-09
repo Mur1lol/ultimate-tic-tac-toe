@@ -19,7 +19,7 @@ export default function Cell({ value, onClick, disabled, isWinningCell = false }
       className={`
         aspect-square w-full
         flex items-center justify-center
-        text-lg sm:text-2xl md:text-3xl font-bold
+        text-lg sm:text-xl md:text-xl font-bold
         border-2 border-gray-300
         transition-all duration-200
         ${disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-blue-50'}
