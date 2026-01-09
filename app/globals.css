@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/**
+ * Estilos globais para Ultimate Tic-Tac-Toe
+ * Design mobile-first com abordagem responsiva
+ */
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -24,3 +29,29 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Estilos específicos mobile-first para o jogo */
+
+/* Garante que o touch funcione bem em dispositivos móveis */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Previne zoom em duplo toque em dispositivos móveis */
+button {
+  touch-action: manipulation;
+}
+
+/* Melhora a renderização de texto em mobile */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ajustes para células do jogo em telas muito pequenas */
+@media (max-width: 320px) {
+  .text-2xl {
+    font-size: 1.25rem;
+  }
+}
+
