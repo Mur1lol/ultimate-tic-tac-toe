@@ -2,13 +2,13 @@
 
 /**
  * Página do jogo multiplayer online
- * Sincroniza o estado do jogo entre dois jogadores via Socket.io
+ * Sincroniza o estado do jogo entre dois jogadores via HTTP polling
  */
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import MainBoard from '@/components/MainBoard';
-import { useSocket } from '@/hooks/useSocket';
+import { useGameRoom } from '@/hooks/useGameRoom';
 import type { GameState, Player } from '@/types/game';
 import {
   createInitialGameState,
@@ -20,13 +20,11 @@ import {
 function MultiplayerGameContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { socket, isConnected } = useSocket();
+  const { getRoom, makeMove, restartGame } = useGameRoom();
   
   const roomId = searchParams.get('room');
   const playerNumber = parseInt(searchParams.get('player') || '0') as 1 | 2;
   const urlName = searchParams.get('name');
-  
-  console.log('[Game Init] URL params - room:', roomId, 'player:', playerNumber, 'name:', urlName);
   
   const [gameState, setGameState] = useState<GameState>(createInitialGameState());
   const [mySymbol, setMySymbol] = useState<Player>('X');
@@ -37,135 +35,66 @@ function MultiplayerGameContent() {
   const [isMyTurn, setIsMyTurn] = useState(false);
   const [showCopiedMessage, setShowCopiedMessage] = useState(false);
 
-  // Configurar símbolo do jogador e reconectar à sala
+  // Configurar nome e símbolo
   useEffect(() => {
-    // Usar nome da URL com prioridade, fallback para localStorage
     const decodedName = urlName ? decodeURIComponent(urlName) : null;
     const savedName = decodedName || localStorage.getItem('playerName') || 'Jogador';
-    console.log('[Game] Configurando jogador - urlName:', urlName, 'decodedName:', decodedName, 'final:', savedName);
     setMyName(savedName);
 
     if (playerNumber === 1) {
       setMySymbol('X');
-      setIsMyTurn(true); // Jogador 1 começa
     } else if (playerNumber === 2) {
       setMySymbol('O');
-      setIsMyTurn(false);
     }
+  }, [playerNumber, urlName]);
 
-    // Reconectar à sala quando o socket estiver pronto
-    if (socket && isConnected && roomId && playerNumber) {
-      console.log('[Game] Reconectando à sala:', roomId, 'como jogador', playerNumber, 'nome:', savedName);
-      socket.emit('rejoin-room', { 
-        roomId, 
-        playerNumber, 
-        playerName: savedName 
-      });
-    }
-  }, [playerNumber, socket, isConnected, roomId, urlName]);
-
-  // Socket event listeners
-  useEffect(() => {
-    if (!socket || !roomId || !isConnected) {
-      console.log('[Game] Aguardando conexão... socket:', !!socket, 'roomId:', roomId, 'isConnected:', isConnected);
+  // Polling: buscar estado da sala periodicamente
+  const pollRoomState = useCallback(async () => {
+    if (!roomId) return;
+    
+    const room = await getRoom(roomId);
+    if (!room) {
+      console.error('Sala não encontrada');
       return;
     }
 
-    console.log('[Game] Configurando listeners. Socket ID:', socket.id, 'Room:', roomId);
-
-    // Receber informações do oponente
-    socket.on('opponent-info', ({ name }: { name: string }) => {
-      console.log('[Game] opponent-info recebido:', name);
-      setOpponentName(name);
-    });
-
-    // Oponente entrou
-    socket.on('opponent-joined', ({ name }: { name: string }) => {
-      console.log('[Game] opponent-joined recebido:', name);
-      setOpponentConnected(true);
-      if (name) setOpponentName(name);
-    });
-
-    // Jogo iniciado
-    socket.on('game-start', ({ players }: { players: Array<{id: string, name: string}> }) => {
-      console.log('[Game] game-start recebido. Players:', players);
-      console.log('[Game] Meu socket ID:', socket.id);
+    // Atualizar estado dos jogadores
+    if (room.players && room.players.length === 2) {
       setGameStarted(true);
       setOpponentConnected(true);
       
-      // Identificar nome do oponente
-      const mySocketId = socket.id;
-      const opponent = players.find(p => p.id !== mySocketId);
-      console.log('[Game] Oponente encontrado:', opponent);
+      const opponent = room.players.find((_: any, idx: number) => idx + 1 !== playerNumber);
       if (opponent) {
-        console.log('[Game] Definindo nome do oponente:', opponent.name);
         setOpponentName(opponent.name);
-      } else {
-        console.warn('[Game] Oponente não encontrado nos players!');
       }
-    });
+    }
 
-    // Receber jogada do oponente
-    socket.on('opponent-move', ({ gameState: newGameState }) => {
-      console.log('[Game] opponent-move recebido');
-      setGameState(newGameState);
-      setIsMyTurn(true);
-    });
-
-    // Sincronizar estado do jogo (ao reconectar)
-    socket.on('sync-game-state', ({ gameState: syncedState, currentTurn }) => {
-      console.log('[Game] sync-game-state recebido - não resetando o jogo. CurrentTurn:', currentTurn, 'PlayerNumber:', playerNumber);
-      setGameState(syncedState);
-      // currentTurn = 0 significa jogador 1, currentTurn = 1 significa jogador 2
-      const isMyTurnNow = (currentTurn === 0 && playerNumber === 1) || (currentTurn === 1 && playerNumber === 2);
-      console.log('[Game] Definindo isMyTurn:', isMyTurnNow);
+    // Atualizar estado do jogo
+    if (room.gameState) {
+      setGameState(room.gameState);
+      
+      // Determinar se é minha vez
+      const currentPlayerSymbol = room.gameState.currentPlayer;
+      const isMyTurnNow = (currentPlayerSymbol === 'X' && playerNumber === 1) || 
+                          (currentPlayerSymbol === 'O' && playerNumber === 2);
       setIsMyTurn(isMyTurnNow);
-    });
+    }
+  }, [roomId, playerNumber, getRoom]);
 
-    // Jogo reiniciado
-    socket.on('game-restarted', ({ startingPlayer }: { startingPlayer: number }) => {
-      console.log('[Game] Jogo reiniciado. Jogador que começa:', startingPlayer, 'Meu número:', playerNumber);
-      const initialState = createInitialGameState();
-      setGameState(initialState);
-      // Verificar se sou eu quem começa
-      setIsMyTurn(startingPlayer === playerNumber);
-    });
+  // Iniciar polling quando a página carregar
+  useEffect(() => {
+    if (!roomId) return;
 
-    // Oponente desconectou
-    socket.on('opponent-disconnected', () => {
-      console.log('[Game] Oponente desconectado, aguardando reconexão...');
-      setOpponentConnected(false);
-      
-      // Dar 10 segundos para reconexão antes de mostrar mensagem
-      const disconnectTimeout = setTimeout(() => {
-        setGameStarted(false);
-        alert('Oponente desconectou. Retornando ao lobby...');
-        router.push('/multiplayer');
-      }, 10000);
-      
-      // Limpar timeout se o oponente reconectar
-      const reconnectHandler = () => {
-        console.log('[Game] Oponente reconectou!');
-        clearTimeout(disconnectTimeout);
-        setOpponentConnected(true);
-        socket.off('opponent-joined', reconnectHandler);
-      };
-      
-      socket.once('opponent-joined', reconnectHandler);
-    });
+    // Poll imediatamente
+    pollRoomState();
 
-    return () => {
-      socket.off('opponent-info');
-      socket.off('opponent-joined');
-      socket.off('game-start');
-      socket.off('opponent-move');
-      socket.off('sync-game-state');
-      socket.off('game-restarted');
-      socket.off('opponent-disconnected');
-    };
-  }, [socket, roomId, router, playerNumber, isConnected]);
+    // Poll a cada 1.5 segundos
+    const intervalId = setInterval(pollRoomState, 1500);
 
-  const handleCellClick = (
+    return () => clearInterval(intervalId);
+  }, [roomId, pollRoomState]);
+
+  const handleCellClick = async (
     boardRow: number,
     boardCol: number,
     cellRow: number,
@@ -221,26 +150,26 @@ function MultiplayerGameContent() {
     setGameState(newGameState);
     setIsMyTurn(false);
 
-    // Enviar jogada para o oponente
-    if (socket && roomId) {
-      socket.emit('make-move', {
-        roomId,
-        move: { boardRow, boardCol, cellRow, cellCol },
-        gameState: newGameState
-      });
+    // Enviar jogada via HTTP
+    if (roomId) {
+      await makeMove(roomId, playerNumber, newGameState);
+      // Poll imediatamente para sincronizar
+      pollRoomState();
     }
   };
 
-  const handleRestart = () => {
-    if (socket && roomId) {
-      socket.emit('restart-game', roomId);
+  const handleRestart = async () => {
+    if (roomId) {
+      const result = await restartGame(roomId);
+      if (result) {
+        const initialState = createInitialGameState();
+        setGameState(initialState);
+        setIsMyTurn(result.startingPlayer === playerNumber);
+      }
     }
   };
 
   const handleLeaveRoom = () => {
-    if (socket) {
-      socket.disconnect();
-    }
     router.push('/multiplayer');
   };
 
@@ -297,13 +226,10 @@ function MultiplayerGameContent() {
 
           {/* Status da conexão */}
           <div className="text-sm">
-            {!isConnected && (
-              <span className="text-yellow-600">⚠️ Conectando ao servidor...</span>
-            )}
-            {isConnected && !opponentConnected && (
+            {!opponentConnected && (
               <span className="text-yellow-600">⏳ Aguardando oponente...</span>
             )}
-            {isConnected && opponentConnected && gameStarted && (
+            {opponentConnected && gameStarted && (
               <span className="text-green-600">✓ Conectado com oponente</span>
             )}
           </div>

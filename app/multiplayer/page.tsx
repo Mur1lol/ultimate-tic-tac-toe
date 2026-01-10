@@ -5,26 +5,19 @@
  * Permite criar ou entrar em salas para jogar 1v1
  */
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useSocket } from '@/hooks/useSocket';
-import type { RoomInfo } from '@/types/socket';
+import { useGameRoom } from '@/hooks/useGameRoom';
 
 function MultiplayerContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { socket, isConnected } = useSocket();
+  const { isConnected, createRoom, joinRoom } = useGameRoom();
   const [roomId, setRoomId] = useState('');
   const [playerName, setPlayerName] = useState('');
-  const playerNameRef = useRef(playerName);
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [isJoiningRoom, setIsJoiningRoom] = useState(false);
   const [error, setError] = useState('');
-  
-  // Manter ref atualizada
-  useEffect(() => {
-    playerNameRef.current = playerName;
-  }, [playerName]);
 
   // Verificar se há código de sala na URL
   useEffect(() => {
@@ -34,58 +27,7 @@ function MultiplayerContent() {
     }
   }, [searchParams]);
 
-  useEffect(() => {
-    if (!socket) return;
-
-    console.log('[Lobby] Socket disponível. Connected:', isConnected, 'Socket ID:', socket.id);
-
-    // Sala criada com sucesso
-    socket.on('room-created', ({ roomId, playerNumber }: RoomInfo) => {
-      const currentName = playerNameRef.current;
-      console.log('[Cliente] Sala criada com sucesso:', roomId, 'playerNumber:', playerNumber);
-      console.log('[Cliente] Nome do jogador:', currentName);
-      setIsCreatingRoom(false);
-      // Salvar nome no localStorage e redirecionar com nome na URL
-      localStorage.setItem('playerName', currentName);
-      const encodedName = encodeURIComponent(currentName);
-      const url = `/multiplayer/game?room=${roomId}&player=${playerNumber}&name=${encodedName}`;
-      console.log('[Cliente] Redirecionando para:', url);
-      router.push(url);
-    });
-
-    // Entrou na sala com sucesso
-    socket.on('room-joined', ({ roomId, playerNumber }: RoomInfo) => {
-      const currentName = playerNameRef.current;
-      console.log('[Cliente] Entrou na sala com sucesso:', roomId, 'playerNumber:', playerNumber);
-      console.log('[Cliente] Nome do jogador:', currentName);
-      setIsJoiningRoom(false);
-      // Salvar nome no localStorage e redirecionar com nome na URL
-      localStorage.setItem('playerName', currentName);
-      const encodedName = encodeURIComponent(currentName);
-      router.push(`/multiplayer/game?room=${roomId}&player=${playerNumber}&name=${encodedName}`);
-    });
-
-    // Erro ao criar/entrar na sala
-    socket.on('error', ({ message }: { message: string }) => {
-      console.log('[Cliente] Erro recebido:', message);
-      setError(message);
-      setIsCreatingRoom(false);
-      setIsJoiningRoom(false);
-    });
-
-    return () => {
-      socket.off('room-created');
-      socket.off('room-joined');
-      socket.off('error');
-    };
-  }, [socket, router]);
-
-  const handleCreateRoom = () => {
-    if (!socket || !isConnected) {
-      setError('Conectando ao servidor...');
-      return;
-    }
-
+  const handleCreateRoom = async () => {
     if (!playerName.trim()) {
       setError('Digite seu nome antes de criar a sala');
       return;
@@ -93,16 +35,21 @@ function MultiplayerContent() {
 
     setError('');
     setIsCreatingRoom(true);
-    console.log('[Cliente] Criando sala com nome:', playerName.trim());
-    socket.emit('create-room', { playerName: playerName.trim() });
+    
+    const result = await createRoom(playerName.trim());
+    
+    if (result) {
+      console.log('[Cliente] Sala criada:', result.roomId);
+      localStorage.setItem('playerName', playerName.trim());
+      const encodedName = encodeURIComponent(playerName.trim());
+      router.push(`/multiplayer/game?room=${result.roomId}&player=${result.playerNumber}&name=${encodedName}`);
+    } else {
+      setError('Erro ao criar sala. Tente novamente.');
+      setIsCreatingRoom(false);
+    }
   };
 
-  const handleJoinRoom = () => {
-    if (!socket || !isConnected) {
-      setError('Conectando ao servidor...');
-      return;
-    }
-
+  const handleJoinRoom = async () => {
     if (!playerName.trim()) {
       setError('Digite seu nome antes de entrar na sala');
       return;
@@ -115,8 +62,18 @@ function MultiplayerContent() {
 
     setError('');
     setIsJoiningRoom(true);
-    console.log('[Cliente] Tentando entrar na sala:', roomId.toUpperCase(), 'com nome:', playerName.trim());
-    socket.emit('join-room', { roomId: roomId.toUpperCase(), playerName: playerName.trim() });
+    
+    const result = await joinRoom(roomId.toUpperCase(), playerName.trim());
+    
+    if (result) {
+      console.log('[Cliente] Entrou na sala:', result.roomId);
+      localStorage.setItem('playerName', playerName.trim());
+      const encodedName = encodeURIComponent(playerName.trim());
+      router.push(`/multiplayer/game?room=${result.roomId}&player=${result.playerNumber}&name=${encodedName}`);
+    } else {
+      setError('Sala não encontrada ou já está cheia');
+      setIsJoiningRoom(false);
+    }
   };
 
   return (

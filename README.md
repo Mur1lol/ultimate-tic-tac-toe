@@ -1,170 +1,277 @@
-# Ultimate Tic-Tac-Toe
-
-Uma aplicação web completa do jogo **Ultimate Tic-Tac-Toe** construída com Next.js 16, React, TypeScript e Tailwind CSS, seguindo rigorosamente o conceito **mobile-first**.
+# Ultimate Tic-Tac-Toe - Multiplayer Online
 
 ## 🎮 Sobre o Jogo
 
-Ultimate Tic-Tac-Toe é uma versão estratégica do jogo da velha tradicional. O tabuleiro consiste em um grid 3x3 de mini tabuleiros, cada um sendo um jogo da velha 3x3.
+Aplicação web completa de **Ultimate Tic-Tac-Toe** (ou Meta Jogo da Velha) com modo multiplayer online. Construído com Next.js 16, React 19 e TypeScript 5.
 
-### Regras
+## ✨ Funcionalidades
 
-1. **Estrutura**: Um tabuleiro principal 3x3 contém 9 mini tabuleiros 3x3
-2. **Jogadores**: Dois jogadores alternam turnos (X e O)
-3. **Primeira jogada**: O jogador inicial pode escolher qualquer mini tabuleiro
-4. **Navegação**: Sua jogada em uma célula (linha, coluna) determina o próximo mini tabuleiro onde o adversário deve jogar
-   - Exemplo: jogar na posição (0,2) envia o próximo jogador para o mini tabuleiro da linha 0, coluna 2
-5. **Exceção**: Se o mini tabuleiro direcionado já estiver completo ou vencido, o jogador pode escolher livremente
-6. **Vitória no mini tabuleiro**: Complete 3 em linha (horizontal, vertical ou diagonal) em um mini tabuleiro
-7. **Vitória no jogo**: Conquiste 3 mini tabuleiros em linha no tabuleiro principal
-
-## 🚀 Tecnologias
-
-- **Next.js 16** (App Router)
-- **React 19**
-- **TypeScript**
-- **Tailwind CSS**
-- **ESLint**
-
-## 📱 Design Mobile-First
-
-A aplicação foi desenvolvida priorizando dispositivos móveis:
-
-- Interface responsiva que se adapta de smartphones pequenos até desktops
-- Feedback visual claro para tabuleiros ativos/inativos
-- Controles touch-friendly
-- Prevenção de zoom acidental
-- Otimização de performance para dispositivos móveis
+✅ **Jogo Local** - Jogue contra um amigo no mesmo dispositivo  
+✅ **Multiplayer Online** - Crie salas e jogue online com qualquer pessoa  
+✅ **Sistema de Salas** - Códigos únicos de 6 caracteres para compartilhar  
+✅ **Sincronização em Tempo Real** - Polling HTTP a cada 1.5s (funciona 100% na Vercel)  
+✅ **Design Responsivo** - Mobile-first, otimizado para celulares e tablets  
+✅ **Alternância de Turnos** - Sistema justo que alterna quem começa entre as partidas  
+✅ **Reconexão Automática** - Reconecte se perder a conexão  
 
 ## 🏗️ Arquitetura
 
-### Estrutura de Pastas
+### Stack Tecnológico
+
+- **Framework**: Next.js 16.1.1 (App Router + Turbopack)
+- **Frontend**: React 19.2.3 com TypeScript 5
+- **Estilização**: Tailwind CSS 4
+- **Comunicação**: HTTP Polling (REST API)
+- **Deploy**: Vercel (100% serverless)
+
+### Por que HTTP Polling em vez de WebSocket?
+
+Inicialmente usamos Socket.io, mas **Vercel não suporta conexões WebSocket persistentes** no modelo serverless. A solução foi implementar **HTTP polling** que:
+
+- ✅ Funciona perfeitamente na Vercel (sem servidores externos)
+- ✅ Polling a cada 1.5 segundos (suficiente para jogo por turnos)
+- ✅ Sem custo adicional de infraestrutura
+- ✅ Estado armazenado em memória no servidor (resetado em cold starts, mas OK para sessões de jogo)
+
+## 📁 Estrutura do Projeto
 
 ```
 ultimate-tic-tac-toe/
 ├── app/
-│   ├── globals.css       # Estilos globais mobile-first
-│   ├── layout.tsx        # Layout raiz com metadados
-│   └── page.tsx          # Página principal com lógica do jogo
+│   ├── api/
+│   │   └── rooms/
+│   │       └── route.ts          # API REST para gerenciar salas
+│   ├── multiplayer/
+│   │   ├── page.tsx              # Lobby (criar/entrar em salas)
+│   │   └── game/
+│   │       └── page.tsx          # Página do jogo multiplayer
+│   ├── globals.css
+│   ├── layout.tsx
+│   └── page.tsx                  # Página inicial (modo local)
 ├── components/
-│   ├── Cell.tsx          # Componente de célula individual
-│   ├── MiniBoard.tsx     # Componente de mini tabuleiro 3x3
-│   └── MainBoard.tsx     # Componente do tabuleiro principal
+│   ├── MainBoard.tsx             # Tabuleiro principal 3x3
+│   ├── MiniBoard.tsx             # Mini tabuleiro 3x3
+│   └── Cell.tsx                  # Célula individual
+├── hooks/
+│   └── useGameRoom.ts            # Hook para comunicação HTTP
+├── utils/
+│   └── gameLogic.ts              # Lógica do jogo
 ├── types/
-│   └── game.ts           # Tipos e interfaces TypeScript
-└── utils/
-    └── gameLogic.ts      # Lógica de verificação de vitória
+│   └── game.ts                   # TypeScript types
+└── server.js                     # Servidor local (dev only)
 ```
 
-### Componentização
-
-- **Cell**: Célula individual com estados (vazio, X, O) e feedback visual
-- **MiniBoard**: Mini tabuleiro 3x3 com indicação de ativo/inativo/vencido
-- **MainBoard**: Tabuleiro principal orquestrando 9 mini tabuleiros
-- **Page**: Gerenciamento de estado global e lógica do jogo
-
-### Gerenciamento de Estado
-
-O estado do jogo é gerenciado com `useState` e inclui:
-
-```typescript
-interface GameState {
-  mainBoard: MainBoard;                    // Todos os mini tabuleiros
-  miniBoardWinners: MiniBoardWinners;      // Rastreamento de vitórias
-  currentPlayer: Player;                   // Jogador da vez
-  nextBoardPosition: [number, number] | null;  // Próximo tabuleiro obrigatório
-  gameWinner: Player | 'draw' | null;      // Vencedor do jogo
-  isGameOver: boolean;                     // Status do jogo
-}
-```
-
-## 🎯 Funcionalidades
-
-- ✅ Jogabilidade completa do Ultimate Tic-Tac-Toe
-- ✅ Destaque visual do mini tabuleiro ativo
-- ✅ Indicação clara do jogador da vez
-- ✅ Detecção de vitória em mini tabuleiros
-- ✅ Detecção de vitória no jogo principal
-- ✅ Detecção de empate
-- ✅ Opção de reiniciar partida
-- ✅ Regras do jogo integradas na interface
-- ✅ Animações e transições suaves
-- ✅ Totalmente responsivo
-
-## 🚀 Como Executar
+## 🚀 Rodando Localmente
 
 ### Pré-requisitos
 
-- Node.js 18+ instalado
-- npm, yarn, pnpm ou bun
+- Node.js 18+ 
+- npm ou yarn
 
-## Getting Started
-
-First, run the development server:
+### Instalação
 
 ```bash
+# Clone o repositório
+git clone [URL_DO_REPOSITORIO]
+
+# Entre na pasta
+cd ultimate-tic-tac-toe
+
+# Instale as dependências
+npm install
+
+# Rode em desenvolvimento
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acesse `http://localhost:3000`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Modo de Desenvolvimento
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+O projeto tem **dois ambientes de desenvolvimento**:
 
-### Build de Produção
+1. **`npm run dev`** - Usa `server.js` com Socket.io (portas 3000 + 3001)
+   - Ótimo para desenvolvimento local rápido
+   - Socket.io para comunicação em tempo real
+   
+2. **`npm run dev:vercel`** - Usa apenas Next.js (porta 3000)
+   - Simula exatamente o ambiente da Vercel
+   - HTTP polling como em produção
+   - **Use este para testar antes de fazer deploy!**
+
+## 📦 Deploy na Vercel
 
 ```bash
-# Criar build otimizado
+# Build de produção
 npm run build
 
-# Iniciar servidor de produção
-npm start
+# Deploy (instale a CLI da Vercel se necessário: npm i -g vercel)
+vercel --prod
 ```
 
-## 🎨 Customização
+O projeto está **100% otimizado para Vercel**:
+- Sem configuração adicional necessária
+- Sem variáveis de ambiente obrigatórias
+- Sem servidores externos (Render, Railway, etc.)
 
-### Cores
+## 🎯 Como Jogar
 
-As cores dos jogadores e estados podem ser customizadas em `components/Cell.tsx` e `components/MiniBoard.tsx`:
+### Modo Local
+1. Clique em "Jogar Localmente" na página inicial
+2. Jogue alternando entre os jogadores X e O
 
-- **Jogador X**: Azul (`text-blue-600`)
-- **Jogador O**: Vermelho (`text-red-600`)
-- **Tabuleiro ativo**: Borda azul (`border-blue-500`)
+### Modo Multiplayer
+1. Clique em "Multiplayer Online"
+2. Digite seu nome
+3. **Criar Sala**: Gera código único de 6 caracteres
+4. **Entrar em Sala**: Digite o código compartilhado pelo amigo
+5. Compartilhe o link ou código com seu oponente
+6. Jogue! As jogadas sincronizam automaticamente
 
-### Estilos
+## 🔧 Arquitetura da API
 
-Os estilos são implementados com Tailwind CSS, facilitando customizações rápidas através de classes utilitárias.
+### Endpoint: `/api/rooms` (POST)
 
-## 📝 Código Limpo
+**Actions disponíveis:**
 
-- **TypeScript**: Tipagem forte para prevenir erros
-- **Componentização**: Separação clara de responsabilidades
-- **Imutabilidade**: Estado atualizado de forma imutável
-- **Comentários**: Documentação de lógica complexa
-- **Semântica**: Código legível e autoexplicativo
+#### 1. Create Room
+```typescript
+POST /api/rooms
+{
+  "action": "create-room",
+  "playerName": "João"
+}
 
-## Learn More
+Resposta: {
+  "success": true,
+  "roomId": "ABC123",
+  "playerNumber": 1
+}
+```
 
-To learn more about Next.js, take a look at the following resources:
+#### 2. Join Room
+```typescript
+POST /api/rooms
+{
+  "action": "join-room",
+  "roomId": "ABC123",
+  "playerName": "Maria"
+}
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Resposta: {
+  "success": true,
+  "roomId": "ABC123",
+  "playerNumber": 2,
+  "players": [...]
+}
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+#### 3. Get Room (Polling)
+```typescript
+POST /api/rooms
+{
+  "action": "get-room",
+  "roomId": "ABC123"
+}
 
-## Deploy on Vercel
+Resposta: {
+  "success": true,
+  "room": {
+    "id": "ABC123",
+    "players": [...],
+    "gameState": {...},
+    "lastActivity": 1234567890
+  }
+}
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+#### 4. Make Move
+```typescript
+POST /api/rooms
+{
+  "action": "make-move",
+  "roomId": "ABC123",
+  "playerNumber": 1,
+  "gameState": {...}
+}
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+#### 5. Restart Game
+```typescript
+POST /api/rooms
+{
+  "action": "restart-game",
+  "roomId": "ABC123"
+}
 
----
+Resposta: {
+  "success": true,
+  "startingPlayer": 2
+}
+```
 
-Desenvolvido com ❤️ usando Next.js e React
+### Limpeza Automática
+
+Salas inativas por mais de **30 minutos** são automaticamente removidas da memória.
+
+## 🎨 Regras do Ultimate Tic-Tac-Toe
+
+1. O tabuleiro é composto por 9 mini tabuleiros 3x3
+2. Para vencer, você precisa vencer 3 mini tabuleiros em linha
+3. **Regra Principal**: Sua jogada determina em qual mini tabuleiro o oponente deve jogar
+   - Se você joga na célula superior direita de um mini tabuleiro, o oponente deve jogar no mini tabuleiro superior direito
+4. Se o mini tabuleiro obrigatório estiver cheio ou ganho, o jogador pode escolher qualquer mini tabuleiro disponível
+5. Vence quem formar uma linha (horizontal, vertical ou diagonal) de mini tabuleiros conquistados primeiro
+
+## 🐛 Troubleshooting
+
+### Salas não sincronizam
+
+- **Causa**: Polling não está funcionando
+- **Solução**: Verifique o console do navegador (F12). O polling deve acontecer a cada 1.5s
+
+### Erro 404 ao criar sala
+
+- **Causa**: API Route não está sendo servida
+- **Solução**: 
+  ```bash
+  # Limpe o cache e rebuilde
+  rm -rf .next
+  npm run build
+  npm start
+  ```
+
+### Estado do jogo resetou
+
+- **Causa**: Vercel fez um "cold start" (normal em serverless)
+- **Solução**: Isso é esperado. Salas são temporárias e vivem apenas enquanto houver atividade
+
+## 📝 Notas Técnicas
+
+### Limitações do Modelo Serverless
+
+- **Estado em memória**: Salas são armazenadas em `Map()` no servidor
+- **Cold starts**: Se não houver requisições por alguns minutos, a Vercel desliga o servidor e o estado é perdido
+- **Não é persistente**: Não usamos banco de dados (proposital para simplicidade)
+
+### Por que isso é OK?
+
+- Jogo de sessão curta (10-15 minutos por partida)
+- Sem necessidade de histórico
+- Foco em simplicidade e zero custo operacional
+
+### Alternativas para Produção
+
+Se precisar de persistência:
+- Adicione Redis (Upstash) para estado distribuído
+- Use Supabase/PlanetScale para histórico de partidas
+- Implemente autenticação (NextAuth.js)
+
+## 📄 Licença
+
+MIT
+
+## 👨‍💻 Autor
+
+Criado para a UTFPR
 

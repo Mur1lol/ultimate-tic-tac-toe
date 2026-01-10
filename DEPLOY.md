@@ -262,8 +262,17 @@ O multiplayer funciona **100% na Vercel** sem precisar de servidor externo! 🎉
 - **Desenvolvimento local**: Use `npm run dev` para iniciar com `server.js` (portas 3000 e 3001)
 - **Produção na Vercel**: Socket.io funciona automaticamente via API Route `/api/socketio`
 
-### Não precisa configurar nada extra!
+### ⚙️ Configuração na Vercel:
 
-Basta fazer o deploy na Vercel e o multiplayer funcionará automaticamente.
+**IMPORTANTE**: Se você configurou a variável `NEXT_PUBLIC_SOCKET_URL` anteriormente, precisa removê-la ou deixá-la vazia!
+
+1. Acesse seu projeto na Vercel
+2. Vá em **Settings → Environment Variables**
+3. **Remova** ou **deixe vazio** a variável `NEXT_PUBLIC_SOCKET_URL`
+4. Vá em **Deployments** → clique nos 3 pontos → **Redeploy**
+
+### ✅ Pronto!
+
+Depois do redeploy, o multiplayer funcionará automaticamente. O sistema detecta automaticamente a URL do site.
 
 **Nota**: O Socket.io na Vercel usa **serverless functions**, então o estado do jogo é mantido apenas enquanto há jogadores conectados. Se todos desconectarem, o jogo é perdido (comportamento normal para apps serverless).
