@@ -2,10 +2,11 @@
 
 /**
  * Página principal do Ultimate Tic-Tac-Toe
- * Gerencia o estado completo do jogo e orquestra os componentes
+ * Menu para escolher modo de jogo
  */
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import MainBoard from '@/components/MainBoard';
 import type { GameState, Player } from '@/types/game';
 import {
@@ -16,6 +17,8 @@ import {
 } from '@/utils/gameLogic';
 
 export default function Home() {
+  const router = useRouter();
+  const [showMenu, setShowMenu] = useState(true);
   const [gameState, setGameState] = useState<GameState>(createInitialGameState());
 
   /**
@@ -104,17 +107,101 @@ export default function Home() {
     setGameState(createInitialGameState());
   };
 
+  const handleBackToMenu = () => {
+    setShowMenu(true);
+    setGameState(createInitialGameState());
+  };
+
+  // Menu de seleção de modo
+  if (showMenu) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 py-8 px-4">
+        <div className="max-w-4xl mx-auto">
+          <header className="text-center mb-12">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-800 mb-4">
+              Ultimate Tic-Tac-Toe
+            </h1>
+            <p className="text-lg sm:text-xl text-gray-600">
+              Escolha o modo de jogo
+            </p>
+          </header>
+
+          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            {/* Modo Local */}
+            <button
+              onClick={() => setShowMenu(false)}
+              className="bg-white rounded-xl shadow-lg p-8 hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+            >
+              <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                Jogar Local
+              </h2>
+              <p className="text-gray-600">
+                Jogue no mesmo dispositivo com um amigo
+              </p>
+            </button>
+
+            {/* Modo Online */}
+            <button
+              onClick={() => router.push('/multiplayer')}
+              className="bg-white rounded-xl shadow-lg p-8 hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+            >
+              <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-10 h-10 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                Jogar Online
+              </h2>
+              <p className="text-gray-600">
+                Jogue com um amigo pela internet
+              </p>
+              <span className="inline-block mt-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-semibold">
+                Novo!
+              </span>
+            </button>
+          </div>
+
+          {/* Regras do jogo */}
+          <details className="bg-white rounded-xl shadow-lg p-6 mt-8 max-w-3xl mx-auto">
+            <summary className="text-xl font-bold text-gray-800 cursor-pointer">
+              Como Jogar
+            </summary>
+            <ul className="mt-4 space-y-2 text-gray-700">
+              <li>• O jogo consiste em um tabuleiro 3x3 de mini tabuleiros 3x3</li>
+              <li>• Sua jogada em uma célula determina onde o próximo jogador deve jogar</li>
+              <li>• Vença um mini tabuleiro fazendo 3 em linha nele</li>
+              <li>• Vença o jogo conquistando 3 mini tabuleiros em linha</li>
+              <li>• Se o mini tabuleiro direcionado estiver cheio ou vencido, escolha livremente</li>
+            </ul>
+          </details>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 py-4 px-2 sm:py-8 sm:px-4">
       <div className="max-w-4xl mx-auto">
         {/* Cabeçalho */}
         <header className="text-center mb-4 sm:mb-8">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 mb-2">
-            Ultimate Tic-Tac-Toe
+            Ultimate Tic-Tac-Toe - Local
           </h1>
           <p className="text-sm sm:text-base text-gray-600">
             Vença 3 mini tabuleiros em linha para ganhar!
           </p>
+          <button
+            onClick={handleBackToMenu}
+            className="mt-2 text-sm text-gray-600 hover:text-gray-800 font-semibold"
+          >
+            ← Voltar ao menu
+          </button>
         </header>
 
         {/* Informações do jogo */}
