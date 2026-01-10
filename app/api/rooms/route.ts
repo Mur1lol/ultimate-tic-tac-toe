@@ -9,7 +9,8 @@ export async function POST(request: Request) {
 
     switch (action) {
       case 'create-room': {
-        const newRoomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+        // Gera código de 4 dígitos (1000-9999)
+        const newRoomId = Math.floor(1000 + Math.random() * 9000).toString();
         rooms.set(newRoomId, {
           players: [{ id: 1, name: playerName }],
           gameState: null,

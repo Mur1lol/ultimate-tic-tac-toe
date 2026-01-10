@@ -74,10 +74,21 @@ function MultiplayerGameContent() {
       setGameState(room.gameState);
       
       // Determinar se é minha vez
+      // Jogador 1 = X, Jogador 2 = O
+      // Se currentPlayer é X, é turno do jogador 1
+      // Se currentPlayer é O, é turno do jogador 2
       const currentPlayerSymbol = room.gameState.currentPlayer;
       const isMyTurnNow = (currentPlayerSymbol === 'X' && playerNumber === 1) || 
                           (currentPlayerSymbol === 'O' && playerNumber === 2);
+      console.log('[Polling] currentPlayer:', currentPlayerSymbol, 'myPlayer:', playerNumber, 'isMyTurn:', isMyTurnNow);
       setIsMyTurn(isMyTurnNow);
+    } else {
+      // Jogo ainda não iniciou, jogador 1 (X) sempre começa
+      if (room.players && room.players.length === 2) {
+        console.log('[Polling] Jogo iniciando, definindo turno. PlayerNumber:', playerNumber);
+        setIsMyTurn(playerNumber === 1);
+      }
+    }
     }
   }, [roomId, playerNumber, getRoom]);
 
