@@ -5,12 +5,12 @@
  * Permite criar ou entrar em salas para jogar 1v1
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSocket } from '@/hooks/useSocket';
 import type { RoomInfo } from '@/types/socket';
 
-export default function MultiplayerPage() {
+function MultiplayerContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { socket, isConnected } = useSocket();
@@ -271,5 +271,20 @@ export default function MultiplayerPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function MultiplayerPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-700 text-lg">Carregando...</p>
+        </div>
+      </div>
+    }>
+      <MultiplayerContent />
+    </Suspense>
   );
 }
