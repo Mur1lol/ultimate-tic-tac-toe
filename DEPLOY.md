@@ -250,3 +250,56 @@ git push -u origin main
 **Tempo estimado**: 5-10 minutos ⏱️
 
 **Resultado**: Site online em `https://seu-projeto.vercel.app` 🚀
+
+---
+
+## ⚠️ IMPORTANTE: Servidor Socket.io para Multiplayer
+
+O modo multiplayer requer um servidor Socket.io separado, pois a Vercel não suporta WebSockets persistentes.
+
+### Opção 1: Deploy no Render.com (Grátis e Fácil) 🎯
+
+1. **Criar conta no Render:**
+   - Acesse: https://render.com/
+   - Faça login com GitHub
+
+2. **Criar Web Service:**
+   - Clique em "New +" → "Web Service"
+   - Conecte seu repositório GitHub `ultimate-tic-tac-toe`
+   - Configure:
+     - **Name:** `ultimate-tic-tac-toe-socket`
+     - **Runtime:** `Node`
+     - **Build Command:** `npm install`
+     - **Start Command:** `node server.js`
+     - **Instance Type:** `Free`
+
+3. **Aguardar deploy** (2-3 minutos)
+   - Copie a URL gerada (ex: `https://ultimate-tic-tac-toe-socket.onrender.com`)
+
+4. **Configurar na Vercel:**
+   - Acesse seu projeto na Vercel
+   - Vá em **Settings → Environment Variables**
+   - Adicione:
+     - **Name:** `NEXT_PUBLIC_SOCKET_URL`
+     - **Value:** `https://ultimate-tic-tac-toe-socket.onrender.com` (sua URL do Render)
+   - Clique em **Save**
+   - Vá em **Deployments** → clique nos 3 pontos → **Redeploy**
+
+### Opção 2: Deploy no Railway.app
+
+1. Acesse: https://railway.app/
+2. Login com GitHub
+3. "New Project" → "Deploy from GitHub repo"
+4. Selecione `ultimate-tic-tac-toe`
+5. Railway detecta automaticamente e faz deploy
+6. Copie a URL e configure na Vercel (igual ao passo 4 acima)
+
+### Variável de Ambiente Local
+
+Para desenvolvimento local, crie `.env.local`:
+
+```env
+NEXT_PUBLIC_SOCKET_URL=http://localhost:3000
+```
+
+**Nota:** No desenvolvimento local, `npm run dev` já inicia o servidor Socket.io automaticamente.

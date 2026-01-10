@@ -20,7 +20,11 @@ export const useSocket = () => {
         if (!socket) {
           console.log('[useSocket] Iniciando conexão...');
           
-          socket = io({
+          // Usar URL do servidor Socket.io da variável de ambiente ou localhost
+          const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000';
+          console.log('[useSocket] Conectando em:', socketUrl);
+          
+          socket = io(socketUrl, {
             path: '/api/socket',
             transports: ['polling', 'websocket'],
             reconnection: true,
