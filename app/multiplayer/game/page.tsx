@@ -271,9 +271,6 @@ function MultiplayerGameContent() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 py-4 px-2 sm:py-8 sm:px-4">
       <div className="max-w-4xl mx-auto">
-        {/* Debug: mostrar nomes no console */}
-        {console.log('[Game Render] myName:', myName, 'opponentName:', opponentName)}
-        
         {/* Cabeçalho */}
         <header className="text-center mb-4 sm:mb-6">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-2">
