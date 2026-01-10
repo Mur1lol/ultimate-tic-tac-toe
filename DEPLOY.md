@@ -255,7 +255,13 @@ git push -u origin main
 
 ## ⚠️ IMPORTANTE: Servidor Socket.io para Multiplayer
 
-O modo multiplayer requer um servidor Socket.io separado, pois a Vercel não suporta WebSockets persistentes.
+O modo multiplayer usa **dois servidores separados**:
+- **Next.js** na porta 3000
+- **Socket.io** na porta 3001
+
+Para desenvolvimento local, `npm run dev` inicia ambos automaticamente via `server.js`.
+
+Para produção na Vercel, você precisa hospedar o servidor Socket.io separadamente.
 
 ### Opção 1: Deploy no Render.com (Grátis e Fácil) 🎯
 
@@ -272,6 +278,8 @@ O modo multiplayer requer um servidor Socket.io separado, pois a Vercel não sup
      - **Build Command:** `npm install`
      - **Start Command:** `node server.js`
      - **Instance Type:** `Free`
+     - **Environment Variables:**
+       - `PORT`: `3001` (ou deixe automático)
 
 3. **Aguardar deploy** (2-3 minutos)
    - Copie a URL gerada (ex: `https://ultimate-tic-tac-toe-socket.onrender.com`)
@@ -296,10 +304,12 @@ O modo multiplayer requer um servidor Socket.io separado, pois a Vercel não sup
 
 ### Variável de Ambiente Local
 
-Para desenvolvimento local, crie `.env.local`:
+Para desenvolvimento local, o `.env.local` já está configurado:
 
 ```env
-NEXT_PUBLIC_SOCKET_URL=http://localhost:3000
+NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
 ```
 
-**Nota:** No desenvolvimento local, `npm run dev` já inicia o servidor Socket.io automaticamente.
+**Nota:** O `server.js` inicia automaticamente:
+- Next.js na porta **3000** → `http://localhost:3000`
+- Socket.io na porta **3001** → `http://localhost:3001`

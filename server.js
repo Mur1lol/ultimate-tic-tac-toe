@@ -6,6 +6,7 @@ const { Server } = require('socket.io');
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = 'localhost';
 const port = process.env.PORT || 3000;
+const socketPort = process.env.SOCKET_PORT || 3001;
 
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
@@ -14,7 +15,8 @@ const handle = app.getRequestHandler();
 const rooms = new Map();
 
 app.prepare().then(() => {
-  const httpServer = createServer(async (req, res) => {
+  // Servidor HTTP principal (Next.js)
+  const server = createServer(async (req, res) => {
     try {
       const parsedUrl = parse(req.url, true);
       await handle(req, res, parsedUrl);
@@ -25,15 +27,12 @@ app.prepare().then(() => {
     }
   });
 
-  // Configurar Socket.io
-  const io = new Server(httpServer, {
-    path: '/api/socket',
-    addTrailingSlash: false,
-    transports: ['polling', 'websocket'],
+  // Servidor WebSocket separado
+  const socketServer = createServer();
+  const io = new Server(socketServer, {
     cors: {
-      origin: '*',
-      methods: ['GET', 'POST'],
-      credentials: true
+      origin: dev ? [`http://localhost:${port}`] : ["https://your-domain.com"],
+      methods: ["GET", "POST"]
     }
   });
 
@@ -212,13 +211,14 @@ app.prepare().then(() => {
     });
   });
 
-  httpServer
-    .once('error', (err) => {
-      console.error(err);
-      process.exit(1);
-    })
-    .listen(port, () => {
-      console.log(`> Ready on http://${hostname}:${port}`);
-      console.log('> Socket.io inicializado');
-    });
+  // Inicia servidores
+  server.listen(port, (err) => {
+    if (err) throw err;
+    console.log(`🚀 Next.js ready on http://${hostname}:${port}`);
+  });
+
+  socketServer.listen(socketPort, (err) => {
+    if (err) throw err;
+    console.log(`🎮 WebSocket server ready on http://${hostname}:${socketPort}`);
+  });
 });
