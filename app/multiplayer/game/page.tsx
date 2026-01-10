@@ -89,7 +89,6 @@ function MultiplayerGameContent() {
         setIsMyTurn(playerNumber === 1);
       }
     }
-    }
   }, [roomId, playerNumber, getRoom]);
 
   // Iniciar polling quando a página carregar
