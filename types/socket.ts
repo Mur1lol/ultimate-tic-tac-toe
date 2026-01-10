@@ -1,5 +1,4 @@
 import type { Server as HTTPServer } from 'http';
-import type { NextApiResponse } from 'next';
 import type { Server as SocketIOServer } from 'socket.io';
 
 /**
@@ -8,12 +7,6 @@ import type { Server as SocketIOServer } from 'socket.io';
 
 export interface SocketServer extends HTTPServer {
   io?: SocketIOServer;
-}
-
-export interface NextApiResponseServerIO extends NextApiResponse {
-  socket: {
-    server: SocketServer;
-  };
 }
 
 export interface Position {
