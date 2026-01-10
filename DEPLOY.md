@@ -253,63 +253,17 @@ git push -u origin main
 
 ---
 
-## ⚠️ IMPORTANTE: Servidor Socket.io para Multiplayer
+## ⚠️ IMPORTANTE: Multiplayer Online
 
-O modo multiplayer usa **dois servidores separados**:
-- **Next.js** na porta 3000
-- **Socket.io** na porta 3001
+O multiplayer funciona **100% na Vercel** sem precisar de servidor externo! 🎉
 
-Para desenvolvimento local, `npm run dev` inicia ambos automaticamente via `server.js`.
+### Como funciona:
 
-Para produção na Vercel, você precisa hospedar o servidor Socket.io separadamente.
+- **Desenvolvimento local**: Use `npm run dev` para iniciar com `server.js` (portas 3000 e 3001)
+- **Produção na Vercel**: Socket.io funciona automaticamente via API Route `/api/socketio`
 
-### Opção 1: Deploy no Render.com (Grátis e Fácil) 🎯
+### Não precisa configurar nada extra!
 
-1. **Criar conta no Render:**
-   - Acesse: https://render.com/
-   - Faça login com GitHub
+Basta fazer o deploy na Vercel e o multiplayer funcionará automaticamente.
 
-2. **Criar Web Service:**
-   - Clique em "New +" → "Web Service"
-   - Conecte seu repositório GitHub `ultimate-tic-tac-toe`
-   - Configure:
-     - **Name:** `ultimate-tic-tac-toe-socket`
-     - **Runtime:** `Node`
-     - **Build Command:** `npm install`
-     - **Start Command:** `node server.js`
-     - **Instance Type:** `Free`
-     - **Environment Variables:**
-       - `PORT`: `3001` (ou deixe automático)
-
-3. **Aguardar deploy** (2-3 minutos)
-   - Copie a URL gerada (ex: `https://ultimate-tic-tac-toe-socket.onrender.com`)
-
-4. **Configurar na Vercel:**
-   - Acesse seu projeto na Vercel
-   - Vá em **Settings → Environment Variables**
-   - Adicione:
-     - **Name:** `NEXT_PUBLIC_SOCKET_URL`
-     - **Value:** `https://ultimate-tic-tac-toe-socket.onrender.com` (sua URL do Render)
-   - Clique em **Save**
-   - Vá em **Deployments** → clique nos 3 pontos → **Redeploy**
-
-### Opção 2: Deploy no Railway.app
-
-1. Acesse: https://railway.app/
-2. Login com GitHub
-3. "New Project" → "Deploy from GitHub repo"
-4. Selecione `ultimate-tic-tac-toe`
-5. Railway detecta automaticamente e faz deploy
-6. Copie a URL e configure na Vercel (igual ao passo 4 acima)
-
-### Variável de Ambiente Local
-
-Para desenvolvimento local, o `.env.local` já está configurado:
-
-```env
-NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
-```
-
-**Nota:** O `server.js` inicia automaticamente:
-- Next.js na porta **3000** → `http://localhost:3000`
-- Socket.io na porta **3001** → `http://localhost:3001`
+**Nota**: O Socket.io na Vercel usa **serverless functions**, então o estado do jogo é mantido apenas enquanto há jogadores conectados. Se todos desconectarem, o jogo é perdido (comportamento normal para apps serverless).
